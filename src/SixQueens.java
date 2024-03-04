@@ -23,6 +23,21 @@ public class SixQueens {
         board[row][col] = 1;
     }
 
+    // Déplace une reine de la colonne C et de la ligne R vers une nouvelle ligne
+    public void moveQueen(int oldRow, int oldCol, int newRow) {
+        // Vérifie d'abord si la nouvelle position est sûre
+        if (isSafe(newRow, oldCol)) {
+            // Corrigez la chaîne de requête Prolog
+            String queryString = String.format("move_queen(Board, %d, %d, %d, NewBoard)", oldCol + 1, oldRow + 1, newRow + 1);
+            Query.hasSolution(queryString);
+            // Met à jour le plateau en Java
+            board[oldRow][oldCol] = 0; // Supprime la reine de l'ancienne position
+            board[newRow][oldCol] = 1; // Place la reine dans la nouvelle position
+        } else {
+            System.out.println("Impossible de déplacer la reine à cette position.");
+        }
+    }
+
     // Prédicat pour supprimer une reine
     public void removeQueen(int row, int col) {
         // Corrigez la chaîne de requête Prolog
@@ -39,10 +54,10 @@ public class SixQueens {
         return Query.hasSolution(queryString);
     }
 
-    // Vérifie si toutes les reines sont en sécurité
+    // Vérifie si la position est gagnante
     public boolean checkWin() {
         String prologBoard = boardToList(board); // Convertit le plateau en liste Prolog
-        String query = String.format("all_queens_safe(%s)", prologBoard);
+        String query = String.format("check_win(%s)", prologBoard);
         return Query.hasSolution(query);
     }
 
