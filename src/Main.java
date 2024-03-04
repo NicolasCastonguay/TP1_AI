@@ -1,29 +1,19 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
-
-/**
- *
- * @author nicolascastonguay
- */
 import java.util.Scanner;
-import com.mycompany.tp1_ai.SixQueens;
 
 public class Main {
     public static void main(String[] args) {
-        com.mycompany.tp1_ai.SixQueens game = new SixQueens();
+        SixQueens game = new SixQueens(); // Initialisation du jeu
         Scanner scanner = new Scanner(System.in);
         int currentPlayer = 1; // Joueur 1 commence
 
+        // Boucle tant que la condition de victoire n'est pas atteinte
         while (!game.checkWin()) {
             System.out.println("Joueur " + currentPlayer + ", entrez votre mouvement (format: add x y, move x y newy, remove x y):");
             String input = scanner.nextLine();
             String[] parts = input.split(" ");
             int row, col, newRow;
 
+            // Traitement des commandes du joueur
             switch (parts[0]) {
                 case "add":
                     row = Integer.parseInt(parts[1]);
@@ -32,7 +22,7 @@ public class Main {
                         System.out.println("Reine ajoutée avec succès.");
                     } else {
                         System.out.println("Mouvement invalide, essayez de nouveau.");
-                        continue; // Ne pas changer de joueur si le mouvement est invalide
+                        continue;
                     }
                     break;
                 case "move":
@@ -43,7 +33,7 @@ public class Main {
                         System.out.println("Reine déplacée avec succès.");
                     } else {
                         System.out.println("Mouvement invalide, essayez de nouveau.");
-                        continue; // Ne pas changer de joueur si le mouvement est invalide
+                        continue;
                     }
                     break;
                 case "remove":
@@ -54,14 +44,14 @@ public class Main {
                     break;
                 default:
                     System.out.println("Commande inconnue, essayez de nouveau.");
-                    continue; // Ne pas changer de joueur si la commande est inconnue
+                    continue;
             }
 
-            // Changer de joueur
+            // Changement de joueur après chaque tour
             currentPlayer = (currentPlayer == 1) ? 2 : 1;
         }
 
-        // Annoncer le gagnant
+        // Annonce du gagnant
         System.out.println("Le jeu est terminé. Le joueur " + ((currentPlayer == 1) ? 2 : 1) + " a gagné!");
         scanner.close();
     }

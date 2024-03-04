@@ -1,73 +1,70 @@
-
-/**
- *
- * @author nicolascastonguay
- */
 import org.jpl7.Query;
 import org.jpl7.Term;
-import org.jpl7.Variable;
+import java.util.Map;
+
 public class SixQueens {
-    private final int SIZE = 6; // Grandeur
-    private int[][] board; // Plateau
+    private final int SIZE = 6; // Taille du plateau
+    private int[][] board; // Représentation du plateau
 
     // Constructeur
     public SixQueens() {
+        // Consulte le fichier Prolog pour initialiser l'environnement Prolog
         Query.hasSolution("consult('six_queens.pl')");
+        // Initialise le plateau dans Prolog
         Query.hasSolution("init_board(Board)");
     }
 
-    // Verifie si une reine peut etre placee a la [ligne][colonne]
+    // Vérifie si une reine peut être placée aux coordonnées données
     public boolean isSafe(int row, int col) {
-        String queryString = String.format("is_safe(Board, %d, %d", row + 1, col + 1);
+        // Corrigez la chaîne de requête Prolog
+        String queryString = String.format("is_safe(Board, %d, %d)", row + 1, col + 1);
         return Query.hasSolution(queryString);
     }
 
+    // Ajoute une reine si c'est possible
     public boolean addQueen(int row, int col) {
         if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
-            // Convertir le plateau de jeu en une liste
-            String prologList = boardToList(board);
-            // Construire la requête Prolog
+            String prologList = boardToList(board); // Convertit le plateau en liste Prolog
             String query = String.format("add_queen(%s, %d, %d, NewBoard)", prologList, row + 1, col + 1);
             Map<String, Term>[] solutions = new Query(query).allSolutions();
             if (solutions.length > 0) {
-                // Mettre à jour le plateau de jeu avec le nouveau plateau retourné par Prolog
-                board = listToBoard(solutions[0].get("NewBoard"));
-                return true; // Ajout réussi
+                board = listToBoard(solutions[0].get("NewBoard")); // Met à jour le plateau
+                return true;
             }
         }
-        return false; // Ajout échoué
+        return false;
     }
 
+    // Déplace une reine
     public boolean moveQueen(int currentRow, int currentCol, int newRow) {
-        // Vérifier si les positions sont dans les limites du plateau
         if (currentRow >= 0 && currentRow < SIZE && currentCol >= 0 && currentCol < SIZE && newRow >= 0 && newRow < SIZE) {
-            board[currentRow][currentCol] = 0; // Enlever temporairement la reine pour vérifier la sécurité
+            // Effectuez la vérification en utilisant Prolog pour la cohérence
+            removeQueen(currentRow, currentCol); // Retire la reine de sa position actuelle
             if (isSafe(newRow, currentCol)) {
-                board[newRow][currentCol] = 1; // Déplacer la reine si la nouvelle position est sûre
-                return true; // Déplacement réussi
+                addQueen(newRow, currentCol); // Ajoute la reine à la nouvelle position
+                return true;
             } else {
-                // Le déplacement n'est pas sûr, remettre la reine à sa position originale
-                board[currentRow][currentCol] = 1;
+                addQueen(currentRow, currentCol); // Remet la reine à sa position originale si le déplacement n'est pas sûr
             }
         }
-        return false; // Déplacement échoué
+        return false;
     }
 
+    // Enlève une reine
     public void removeQueen(int row, int col) {
-        // Vérifier si la position est dans les limites du plateau
         if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
-            board[row][col] = 0; // Enlever une reine
+            board[row][col] = 0; // Retire la reine du plateau
         }
     }
+
+    // Vérifie si toutes les reines sont en sécurité
     public boolean checkWin() {
-        // Convert the Java board array into Prolog list format
-        String prologBoard = boardToList(board);
-        // Query Prolog to check if all queens are safe
+        String prologBoard = boardToList(board); // Convertit le plateau en liste Prolog
         String query = String.format("all_queens_safe(%s)", prologBoard);
         return Query.hasSolution(query);
     }
 
-
+    // Convertit le plateau en liste Prolog
     public String boardToList(int[][] board) {
         StringBuilder listBuilder = new StringBuilder("[");
         for (int i = 0; i < board.length; i++) {
@@ -87,8 +84,9 @@ public class SixQueens {
         return listBuilder.toString();
     }
 
+    // Convertit une liste Prolog en plateau
     public int[][] listToBoard(Term prologList) {
-        int[][] board = new int[SIZE][SIZE];
+        int[][] board = new int[SIZE][SIZE]; // Initialise un nouveau plateau
         Term[] lists = prologList.toTermArray();
         for (int i = 0; i < lists.length; i++) {
             Term[] innerList = lists[i].toTermArray();
@@ -98,13 +96,14 @@ public class SixQueens {
         }
         return board;
     }
-    // Affichage
+
+    // Affiche le plateau
     public void printBoard() {
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-                System.out.print(board[i][j] + " ");
+                System.out.print(board[i][j] + " "); // Affiche l'état actuel de chaque cellule du plateau
             }
-            System.out.println();
+            System.out.println(); // Passe à la ligne suivante après chaque rangée
         }
     }
 }
