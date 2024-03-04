@@ -97,20 +97,48 @@ public class SixQueens {
         return board;
     }
 
-    // Calcule la valeur heuristique pour un état donné
-    public int calculateHeuristic() {
-        String prologBoard = boardToList(board); // Convertit le plateau en liste Prolog
-        Query query = new Query("heuristic(" + prologBoard + ", NextQueen, Heuristic)");
-        return query.oneSolution().get("Heuristic").intValue();
+    // Get the next move with the lowest heuristic value
+    public int[] getNextMove() {
+        int[] nextMove = new int[2];
+        int minHeuristic = Integer.MAX_VALUE;
+
+        // Iterate over all possible moves and calculate their heuristic value
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (isSafe(row, col)) {
+                    int heuristic = calculateHeuristic(row, col);
+                    if (heuristic < minHeuristic) {
+                        minHeuristic = heuristic;
+                        nextMove[0] = row;
+                        nextMove[1] = col;
+                    }
+                }
+            }
+        }
+        return nextMove;
     }
 
-    // Affiche le plateau
+    // Calculate the heuristic value for the given move
+    private int calculateHeuristic(int row, int col) {
+        String prologList = boardToList(board); // Convert the board to a Prolog list
+        String query = String.format("heuristic(%s, [(%d, %d)], Heuristic)", prologList, row + 1, col + 1);
+        Query q = new Query(query);
+        if (q.hasSolution()) {
+            return q.oneSolution().get("Heuristic").intValue();
+        }
+        return Integer.MAX_VALUE; // Default to maximum value if no solution found
+    }
+
     public void printBoard() {
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-                System.out.print(board[i][j] + " "); // Affiche l'état actuel de chaque cellule du plateau
+                if (board[i][j] == 1) {
+                    System.out.print("Q "); // Queen present at this position
+                } else {
+                    System.out.print("_ "); // Empty position
+                }
             }
-            System.out.println(); // Passe à la ligne suivante après chaque rangée
+            System.out.println(); // Move to the next row
         }
     }
 }
