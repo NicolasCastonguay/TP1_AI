@@ -14,47 +14,29 @@ public class SixQueens {
         Query.hasSolution("init_board(Board)");
     }
 
+    // Prédicat pour ajouter une reine
+    public void addQueen(int row, int col) {
+        // Corrigez la chaîne de requête Prolog
+        String queryString = String.format("add_queen(Board, %d, %d, NewBoard)", row + 1, col + 1);
+        Query.hasSolution(queryString);
+        // Met à jour le plateau en Java
+        board[row][col] = 1;
+    }
+
+    // Prédicat pour supprimer une reine
+    public void removeQueen(int row, int col) {
+        // Corrigez la chaîne de requête Prolog
+        String queryString = String.format("remove_queen(Board, %d, %d, NewBoard)", row + 1, col + 1);
+        Query.hasSolution(queryString);
+        // Met à jour le plateau en Java
+        board[row][col] = 0;
+    }
+
     // Vérifie si une reine peut être placée aux coordonnées données
     public boolean isSafe(int row, int col) {
         // Corrigez la chaîne de requête Prolog
-        String queryString = String.format("is_safe(Board, %d, %d)", row + 1, col + 1);
+        String queryString = String.format("valid_position(Board, (%d, %d))", col + 1, row + 1);
         return Query.hasSolution(queryString);
-    }
-
-    // Ajoute une reine si c'est possible
-    public boolean addQueen(int row, int col) {
-        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
-            String prologList = boardToList(board); // Convertit le plateau en liste Prolog
-            String query = String.format("add_queen(%s, %d, %d, NewBoard)", prologList, row + 1, col + 1);
-            Map<String, Term>[] solutions = new Query(query).allSolutions();
-            if (solutions.length > 0) {
-                board = listToBoard(solutions[0].get("NewBoard")); // Met à jour le plateau
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Déplace une reine
-    public boolean moveQueen(int currentRow, int currentCol, int newRow) {
-        if (currentRow >= 0 && currentRow < SIZE && currentCol >= 0 && currentCol < SIZE && newRow >= 0 && newRow < SIZE) {
-            // Effectuez la vérification en utilisant Prolog pour la cohérence
-            removeQueen(currentRow, currentCol); // Retire la reine de sa position actuelle
-            if (isSafe(newRow, currentCol)) {
-                addQueen(newRow, currentCol); // Ajoute la reine à la nouvelle position
-                return true;
-            } else {
-                addQueen(currentRow, currentCol); // Remet la reine à sa position originale si le déplacement n'est pas sûr
-            }
-        }
-        return false;
-    }
-
-    // Enlève une reine
-    public void removeQueen(int row, int col) {
-        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
-            board[row][col] = 0; // Retire la reine du plateau
-        }
     }
 
     // Vérifie si toutes les reines sont en sécurité
@@ -85,13 +67,15 @@ public class SixQueens {
     }
 
     // Convertit une liste Prolog en plateau
+    // Convertit une liste Prolog en plateau
     public int[][] listToBoard(Term prologList) {
         int[][] board = new int[SIZE][SIZE]; // Initialise un nouveau plateau
         Term[] lists = prologList.toTermArray();
         for (int i = 0; i < lists.length; i++) {
-            Term[] innerList = lists[i].toTermArray();
-            for (int j = 0; j < innerList.length; j++) {
-                board[i][j] = innerList[j].intValue();
+            Term innerList = lists[i];
+            Term[] innerArray = innerList.toTermArray();
+            for (int j = 0; j < innerArray.length; j++) {
+                board[i][j] = innerArray[j].intValue();
             }
         }
         return board;

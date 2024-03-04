@@ -7,65 +7,39 @@ init_board(Board) :-
     length(Board, board_size),
     maplist(=(0), Board).
 
-% Vérifie si une reine est en sécurité
-is_safe(Board, Row, Col) :-
-    not(attack(Row, Col, Board, 1)).
 
-attack(Row, Col, Board, Index) :-
-    nth1(Index, Board, QRow),
-    QCol is Index,
-    (   Row = QRow;  % Même ligne
-        Col = QCol;  % Même colonne
-        abs(Row - QRow) =:= abs(Col - QCol)  % Diagonale
-    ), !.
-
-attack(Row, Col, Board, Index) :-
-    length(Board, Length),
-    Index < Length,
-    NextIndex is Index + 1,
-    attack(Row, Col, Board, NextIndex).
-
-% Predicates for adding, moving, and removing queens
-% Add a queen at column C and row R
+% Prédicats pour ajouter, déplacer et supprimer des reines
+% Ajoute une reine à la colonne C et à la ligne R
 add_queen([], C, R, [(C, R)]).
 add_queen([(X, Y)|Queens], C, R, [(X, Y)|NewQueens]) :-
     add_queen(Queens, C, R, NewQueens).
 
-% Move a queen from column C and row R to new_row
+% Déplace une reine de la colonne C et de la ligne R vers la nouvelle ligne
 move_queen([(C, _)|Queens], C, R, NewRow, [(C, NewRow)|Queens]).
 move_queen([(X, Y)|Queens], C, R, NewRow, [(X, Y)|NewQueens]) :-
     move_queen(Queens, C, R, NewRow, NewQueens).
 
-% Remove a queen from column C and row R
+% Supprime une reine de la colonne C et de la ligne R
 remove_queen([(C, _)|Queens], C, R, Queens).
 remove_queen([(X, Y)|Queens], C, R, [(X, Y)|NewQueens]) :-
     remove_queen(Queens, C, R, NewQueens).
 
-% Heuristic function: Calculate the number of threatened pairs of queens
-threatened_pairs(_, [], 0).
-threatened_pairs((C, R), [(X, Y)|Queens], N) :-
-    threatened_pairs((C, R), Queens, RestThreats),
-    (C = X; R = Y; abs(C - X) =:= abs(R - Y)), % Check if (C, R) threatens (X, Y)
-    N is RestThreats + 1.
-threatened_pairs((C, R), [_|Queens], N) :-
-    threatened_pairs((C, R), Queens, N).
 
-% Calculate the heuristic value for a state
-heuristic([], _, 0).
-heuristic([(C, R)|Queens], NextQueen, Heuristic) :-
-    heuristic(Queens, NextQueen, RestHeuristic),
-    threatened_pairs((C, R), NextQueen, Threats),
-    Heuristic is RestHeuristic + Threats.
+% Vérifie si la position est valide pour une nouvelle reine
+valid_position(Queens, (C, R)) :-
+    \+ member((C, _), Queens),  % Pas de reine dans la même colonne
+    \+ member((_, R), Queens),  % Pas de reine dans la même ligne
+    \+ threatened_by_diagonal(Queens, (C, R)). % Pas de reine dans les mêmes diagonales
 
-% A* search algorithm
-a_star_search(CurrentState, _, []) :- % Base case: current state is final
-    heuristic(CurrentState, [], Heuristic),
-    Heuristic =:= 0.
-a_star_search(CurrentState, Visited, [NextMove|Moves]) :-
-    select(NextMove, [(C, R)|CurrentState], NewState), % Select a queen to move
-    \+ member(NewState, Visited), % Avoid loops
-    heuristic(CurrentState, NewState, Heuristic),
-    a_star_search(NewState, [NewState|Visited], Moves).
+% Vérifie si une reine est menacée en diagonale
+threatened_by_diagonal([], _).
+threatened_by_diagonal([(X, Y)|Queens], (C, R)) :-
+    \+ (abs(C - X) =:= abs(R - Y)),
+    threatened_by_diagonal(Queens, (C, R)).
+
+heuristic(Queens, Heuristic) :-
+    findall((C, R), (board_size(Size), between(1, Size, C), between(1, Size, R), valid_position(Queens, (C, R))), ValidPositions),
+    length(ValidPositions, Heuristic).  % Heuristic est le nombre de positions valides restantes
 
 % Vérifie si la configuration actuelle du plateau est gagnante
 check_win(Board) :-
@@ -74,12 +48,16 @@ check_win(Board) :-
 
 % Vérifie si toutes les reines sur le plateau sont en sécurité
 all_queens_safe(Board) :-
+    % Trouve toutes les positions des reines sur le plateau
     findall((R,C), (nth1(R, Board, Row), nth1(C, Row, 1)), Queens),
+    % Vérifie si toutes les reines sont en sécurité
     all_safe(Queens, Board).
 
 % Itère sur toutes les reines pour s'assurer que chacune n'est pas attaquée
 all_safe([], _).
 all_safe([(R,C)|Others], Board) :-
-    is_safe(Board, R, C),
+    % Vérifie si la reine à la position (R,C) est en sécurité
+    valid_position(Board, (C, R)),
+    % Passe à la vérification de la prochaine reine
     all_safe(Others, Board).
 
