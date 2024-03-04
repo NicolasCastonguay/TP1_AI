@@ -1,82 +1,39 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package com.mycompany.tp1_ai;
 
 /**
  *
  * @author nicolascastonguay
  */
-
+import org.jpl7.Query;
+import org.jpl7.Term;
+import org.jpl7.Variable;
 public class SixQueens {
     private final int SIZE = 6; // Grandeur
     private int[][] board; // Plateau
 
     // Constructeur
     public SixQueens() {
-        this.board = new int[SIZE][SIZE];
-        // Initialise le jeu, 0 indique une case vide
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                this.board[i][j] = 0;
-            }
-        }
+        Query.hasSolution("consult('six_queens.pl')");
+        Query.hasSolution("init_board(Board)");
     }
 
     // Verifie si une reine peut etre placee a la [ligne][colonne]
     public boolean isSafe(int row, int col) {
-        // Vérifier cette ligne sur le côté gauche
-        for (int i = 0; i < col; i++) {
-            if (board[row][i] == 1) {
-                return false; // Conflit trouvé
-            }
-        }
-
-        // Vérifier la diagonale supérieure à gauche
-        for (int i = row, j = col; i >= 0 && j >= 0; i--, j--) {
-            if (board[i][j] == 1) {
-                return false; // Conflit trouvé
-            }
-        }
-
-        // Vérifier la diagonale inférieure à gauche
-        for (int i = row, j = col; j >= 0 && i < SIZE; i++, j--) {
-            if (board[i][j] == 1) {
-                return false; // Conflit trouvé
-            }
-        }
-
-        // Vérifier cette ligne sur le côté droit
-        for (int i = col + 1; i < SIZE; i++) {
-            if (board[row][i] == 1) {
-                return false; // Conflit trouvé
-            }
-        }
-
-        // Vérifier la diagonale supérieure à droite
-        for (int i = row - 1, j = col + 1; i >= 0 && j < SIZE; i--, j++) {
-            if (board[i][j] == 1) {
-                return false; // Conflit trouvé
-            }
-        }
-
-        // Vérifier la diagonale inférieure à droite
-        for (int i = row + 1, j = col + 1; i < SIZE && j < SIZE; i++, j++) {
-            if (board[i][j] == 1) {
-                return false; // Conflit trouvé
-            }
-        }
-
-        // Si aucun conflit n'est trouvé, il est sûr de placer la reine
-        return true;
+        String queryString = String.format("is_safe(Board, %d, %d", row + 1, col + 1);
+        return Query.hasSolution(queryString);
     }
 
     public boolean addQueen(int row, int col) {
-        // Vérifier si la position est dans les limites du plateau et si elle est sûre
-        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE && isSafe(row, col)) {
-            board[row][col] = 1; // Placer une reine si c'est sûr
-            return true; // Ajout réussi
+        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
+            // Convertir le plateau de jeu en une liste
+            String prologList = boardToList(board);
+            // Construire la requête Prolog
+            String query = String.format("add_queen(%s, %d, %d, NewBoard)", prologList, row + 1, col + 1);
+            Map<String, Term>[] solutions = new Query(query).allSolutions();
+            if (solutions.length > 0) {
+                // Mettre à jour le plateau de jeu avec le nouveau plateau retourné par Prolog
+                board = listToBoard(solutions[0].get("NewBoard"));
+                return true; // Ajout réussi
+            }
         }
         return false; // Ajout échoué
     }
@@ -103,15 +60,43 @@ public class SixQueens {
         }
     }
     public boolean checkWin() {
-        int queens = 0;
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if (board[i][j] == 1) {
-                    queens++;
+        // Convert the Java board array into Prolog list format
+        String prologBoard = boardToList(board);
+        // Query Prolog to check if all queens are safe
+        String query = String.format("all_queens_safe(%s)", prologBoard);
+        return Query.hasSolution(query);
+    }
+
+
+    public String boardToList(int[][] board) {
+        StringBuilder listBuilder = new StringBuilder("[");
+        for (int i = 0; i < board.length; i++) {
+            listBuilder.append("[");
+            for (int j = 0; j < board[i].length; j++) {
+                listBuilder.append(board[i][j]);
+                if (j < board[i].length - 1) {
+                    listBuilder.append(",");
                 }
             }
+            listBuilder.append("]");
+            if (i < board.length - 1) {
+                listBuilder.append(",");
+            }
         }
-        return queens == SIZE; // Gagné si 6 reines sont placées correctement
+        listBuilder.append("]");
+        return listBuilder.toString();
+    }
+
+    public int[][] listToBoard(Term prologList) {
+        int[][] board = new int[SIZE][SIZE];
+        Term[] lists = prologList.toTermArray();
+        for (int i = 0; i < lists.length; i++) {
+            Term[] innerList = lists[i].toTermArray();
+            for (int j = 0; j < innerList.length; j++) {
+                board[i][j] = innerList[j].intValue();
+            }
+        }
+        return board;
     }
     // Affichage
     public void printBoard() {
