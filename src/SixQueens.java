@@ -97,6 +97,13 @@ public class SixQueens {
         return board;
     }
 
+    // Calcule la valeur heuristique pour un état donné
+    public int calculateHeuristic() {
+        String prologBoard = boardToList(board); // Convertit le plateau en liste Prolog
+        Query query = new Query("heuristic(" + prologBoard + ", NextQueen, Heuristic)");
+        return query.oneSolution().get("Heuristic").intValue();
+    }
+
     // Affiche le plateau
     public void printBoard() {
         for (int i = 0; i < SIZE; i++) {

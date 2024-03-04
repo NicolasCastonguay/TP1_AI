@@ -25,23 +25,47 @@ attack(Row, Col, Board, Index) :-
     NextIndex is Index + 1,
     attack(Row, Col, Board, NextIndex).
 
-% Ajoute une reine sur le plateau
-add_queen(Board, Row, Col, NewBoard) :-
-    % Assure que le mouvement est dans les limites du plateau et que la case est libre
-    valid_position(Row, Col),
-    nth1(Row, Board, OldRow),
-    replace(OldRow, Col, 1, NewRow),
-    replace(Board, Row, NewRow, NewBoard).
+% Predicates for adding, moving, and removing queens
+% Add a queen at column C and row R
+add_queen([], C, R, [(C, R)]).
+add_queen([(X, Y)|Queens], C, R, [(X, Y)|NewQueens]) :-
+    add_queen(Queens, C, R, NewQueens).
 
-% Déplace une reine d'une ligne à une autre dans la même colonne
-move_queen(Board, CurrentRow, CurrentCol, NewRow, NewBoard) :-
-    % Vérifie si le mouvement est valide et sûr
-    valid_move(Board, CurrentRow, CurrentCol, NewRow),
-    update_board(Board, CurrentRow, CurrentCol, NewRow, NewBoard).
+% Move a queen from column C and row R to new_row
+move_queen([(C, _)|Queens], C, R, NewRow, [(C, NewRow)|Queens]).
+move_queen([(X, Y)|Queens], C, R, NewRow, [(X, Y)|NewQueens]) :-
+    move_queen(Queens, C, R, NewRow, NewQueens).
 
-% Retire une reine d'une position spécifique
-remove_queen(Board, Row, Col, NewBoard) :-
-    replace(Board, Row, Col, 0, NewBoard).
+% Remove a queen from column C and row R
+remove_queen([(C, _)|Queens], C, R, Queens).
+remove_queen([(X, Y)|Queens], C, R, [(X, Y)|NewQueens]) :-
+    remove_queen(Queens, C, R, NewQueens).
+
+% Heuristic function: Calculate the number of threatened pairs of queens
+threatened_pairs(_, [], 0).
+threatened_pairs((C, R), [(X, Y)|Queens], N) :-
+    threatened_pairs((C, R), Queens, RestThreats),
+    (C = X; R = Y; abs(C - X) =:= abs(R - Y)), % Check if (C, R) threatens (X, Y)
+    N is RestThreats + 1.
+threatened_pairs((C, R), [_|Queens], N) :-
+    threatened_pairs((C, R), Queens, N).
+
+% Calculate the heuristic value for a state
+heuristic([], _, 0).
+heuristic([(C, R)|Queens], NextQueen, Heuristic) :-
+    heuristic(Queens, NextQueen, RestHeuristic),
+    threatened_pairs((C, R), NextQueen, Threats),
+    Heuristic is RestHeuristic + Threats.
+
+% A* search algorithm
+a_star_search(CurrentState, _, []) :- % Base case: current state is final
+    heuristic(CurrentState, [], Heuristic),
+    Heuristic =:= 0.
+a_star_search(CurrentState, Visited, [NextMove|Moves]) :-
+    select(NextMove, [(C, R)|CurrentState], NewState), % Select a queen to move
+    \+ member(NewState, Visited), % Avoid loops
+    heuristic(CurrentState, NewState, Heuristic),
+    a_star_search(NewState, [NewState|Visited], Moves).
 
 % Vérifie si la configuration actuelle du plateau est gagnante
 check_win(Board) :-
@@ -58,3 +82,4 @@ all_safe([], _).
 all_safe([(R,C)|Others], Board) :-
     is_safe(Board, R, C),
     all_safe(Others, Board).
+
