@@ -103,3 +103,5 @@ public class SixQueens {
             }
         }
         return nextMove;
+    }
+}
