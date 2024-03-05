@@ -104,4 +104,17 @@ public class SixQueens {
         }
         return nextMove;
     }
+    // Imprime l'état actuel du plateau
+    public void printBoard() {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (board[i][j] == 1) {
+                    System.out.print("Q "); // Une reine est présente à cette position
+                } else {
+                    System.out.print("_ "); // Position vide
+                }
+            }
+            System.out.println();
+        }
+    }
 }
